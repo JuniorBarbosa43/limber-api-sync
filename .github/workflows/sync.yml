@@ -1,0 +1,48 @@
+name: Sync Limber -> Google Sheets
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 07:00 BRT (10:00 UTC) todos os dias
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Data inicial YYYY-MM-DD (backfill). Vazio = continua do Sheet.'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Simular sem escrever no Sheet?'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  sync:
+    name: Limber -> Sheets
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run sync
+        env:
+          LIMBER_USER:         ${{ secrets.LIMBER_USER }}
+          LIMBER_PASS:         ${{ secrets.LIMBER_PASS }}
+          GOOGLE_SA_KEY:       ${{ secrets.GOOGLE_SA_KEY }}
+          MAIN_SHEET_ID:       ${{ secrets.MAIN_SHEET_ID }}
+          INGRESSOS_SHEET_ID:  ${{ secrets.INGRESSOS_SHEET_ID }}
+          START_DATE:          ${{ inputs.start_date }}
+          DRY_RUN:             ${{ inputs.dry_run || 'false' }}
+        run: node src/sync.js
