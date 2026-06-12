@@ -7,8 +7,12 @@ const { google } = require('googleapis');
 const BATCH = 2000;
 
 function getSheetsClient() {
-  const keyJson = process.env.GOOGLE_SA_KEY;
-  if (!keyJson) throw new Error('GOOGLE_SA_KEY env var obrigatoria');
+  let keyJson = process.env.GOOGLE_SA_KEY;
+  if (!keyJson) {
+    const keyFile = process.env.GOOGLE_SA_KEY_FILE;
+    if (keyFile) { keyJson = require('fs').readFileSync(keyFile, 'utf8'); }
+  }
+  if (!keyJson) throw new Error('GOOGLE_SA_KEY ou GOOGLE_SA_KEY_FILE obrigatorio');
   const credentials = JSON.parse(keyJson);
   const auth = new google.auth.GoogleAuth({
     credentials,
