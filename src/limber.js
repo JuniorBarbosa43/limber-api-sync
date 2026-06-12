@@ -28,8 +28,12 @@ async function getToken() {
         }, res => {
           let d = ''; res.on('data', c => d += c);
           res.on('end', () => {
-            try { resolve(JSON.parse(d).token); }
-            catch (e) { reject(new Error('Auth parse: ' + d.slice(0, 200))); }
+            try {
+              const parsed = JSON.parse(d);
+              if (parsed.token) { resolve(parsed.token); }
+              else { reject(new Error('Token vazio - HTTP ' + res.statusCode + ' resp: ' + d.slice(0, 300))); }
+            }
+            catch (e) { reject(new Error('Auth parse HTTP ' + res.statusCode + ': ' + d.slice(0, 300))); }
           });
         });
         req.setTimeout(20000, () => { req.destroy(); reject(new Error('Auth timeout')); });
